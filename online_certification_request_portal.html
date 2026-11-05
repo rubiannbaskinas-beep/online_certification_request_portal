@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Real Property & Tax Certification Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#b45309',
+                        accent: '#0d9488',
+                        lightbg: '#f8fafc'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .step-active { color: #1e3a8a; font-weight: 700; border-bottom: 3px solid #1e3a8a; }
+        .tab-btn { transition: all 0.2s ease-in-out; }
+    </style>
+</head>
+<body class="bg-[#f1f5f9] min-h-screen flex flex-col font-sans">
+
+    <!-- TOP HEADER -->
+    <header class="bg-[#0f172a] text-white shadow-md">
+        <div class="max-content max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-600 text-white p-2.5 rounded-lg shadow-inner">
+                    <i class="fa-solid fa-landmark text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight">MUNICIPAL ASSESSOR'S OFFICE</h1>
+                    <p class="text-xs text-amber-500 font-medium tracking-widest uppercase">Real Property Online Certification Portal</p>
+                </div>
+            </div>
+            <nav class="flex items-center gap-2">
+                <button onclick="switchView('submit')" id="nav-submit" class="tab-btn px-4 py-2 rounded-md bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-file-signature"></i> Request Certification
+                </button>
+                <button onclick="switchView('track')" id="nav-track" class="tab-btn px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass"></i> Track Application
+                </button>
+                <span class="text-slate-600 px-1">|</span>
+                <button onclick="promptStaffLogin()" id="nav-staff" class="tab-btn px-3 py-2 rounded-md bg-slate-800 hover:bg-amber-700 text-amber-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-amber-600/30">
+                    <i class="fa-solid fa-lock"></i> Staff Login
+                </button>
+                <button onclick="logoutStaff()" id="nav-logout" class="hidden tab-btn px-3 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1">
+                    <i class="fa-solid fa-right-from-bracket"></i> Admin Logout
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- NOTICE BANNER -->
+    <div class="bg-amber-50 border-b border-amber-200">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 text-center flex items-center justify-center gap-2 text-xs sm:text-sm text-amber-800 font-medium">
+            <i class="fa-solid fa-circle-info text-amber-600 animate-pulse"></i>
+            <span>Submit scanned requirements in <strong>PDF, JPEG, or PNG</strong>. Initial document evaluation is done virtually prior to processing fee generation.</span>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:py-8">
+        
+        <!-- ================= SUBMIT APPLICATION VIEW ================= -->
+        <section id="view-submit" class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+            <!-- Progress Stepper -->
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between text-xs sm:text-sm text-slate-500 font-semibold overflow-x-auto whitespace-nowrap">
+                <div class="flex items-center gap-2 step-item step-active" id="step1-lbl"><span class="bg-blue-900 text-white w-5 h-5 rounded-full inline-flex items-center justify-center text-xs">1</span> Request Details</div>
+                <i class="fa-solid fa-chevron-right text-slate-300"></i>
+                <div class="flex items-center gap-2 step-item" id="step2-lbl"><span class="bg-slate-300 text-slate-600 w-5 h-5 rounded-full inline-flex items-center justify-center text-xs">2</span> Document Uploads</div>
+                <i class="fa-solid fa-chevron-right text-slate-300"></i>
+                <div class="flex items-center gap-2 step-item" id="step3-lbl"><span class="bg-slate-300 text-slate-600 w-5 h-5 rounded-full inline-flex items-center justify-center text-xs">3</span> Delivery & Review</div>
+            </div>
+
+            <form id="requestForm" onsubmit="handleFormSubmission(event)" class="p-6 sm:p-8 space-y-8">
+                <!-- STEP 1: REQUEST DETAILS -->
+                <div id="step-1" class="space-y-6">
+                    <div class="border-b border-slate-200 pb-2">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-file-invoice text-blue-800"></i> Certification & Property Details</h2>
+                        <p class="text-xs text-slate-500">Specify what you are requesting and the associated property details.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Certification Requested *</label>
+                            <select id="certType" required onchange="toggleOtherCert(this.value); updateChecklists(this.value);" class="w-full bg-slate-50 border border-slate-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 focus:bg-white text-slate-800 font-medium">
+                                <option value="">-- Choose requested certificate --</option>
+                                <option value="Tax Declaration">Certified True Copy of Tax Declaration</option>
+                                <option value="Tax Clearance">Real Property Tax Clearance</option>
+                                <option value="Certificate of No Improvement">Certificate of No Improvement</option>
+                                <option value="Property Holdings">Certificate of Land / Property Holdings</option>
+                                <option value="No Property">Certificate of No Property Holdings</option>
+                                <option value="Transfer Request">Request for Transfer of Tax Declaration</option>
+                                <option value="Other">Other Certificate / Custom Certification Request (Specify)</option>
+                            </select>
+                        </div>
+                        <div id="otherCertContainer" class="hidden">
+                            <label class="block text-xs font-bold text-amber-700 uppercase tracking-wider mb-1.5">Specify "Other" Certification Needed *</label>
+                            <input type="text" id="otherCertText" placeholder="e.g. Certificate of Land Classification / History Search" class="w-full bg-slate-50 border border-amber-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white text-slate-800">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Tax Declaration No. (TDN)</label>
+                            <input type="text" id="propTdn" placeholder="e.g. F-002-14022" class="w-full bg-white border border-slate-300 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-blue-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Property Pin (PIN)</label>
+                            <input type="text" id="propPin" placeholder="e.g. 024-12-004-05-012" class="w-full bg-white border border-slate-300 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-blue-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Lot / Cadastral No.</label>
+                            <input type="text" id="propLot" placeholder="e.g. Lot No. 104-A, Cad 45" class="w-full bg-white border border-slate-300 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-blue-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Title Number (OCT/TCT)</label>
+                            <input type="text" id="propTitle" placeholder="e.g. T-123456" class="w-full bg-white border border-slate-300 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-blue-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Registered Owner *</label>
+                            <input type="text" required id="propOwner" placeholder="Complete Name on Title" class="w-full bg-white border border-slate-300 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-blue-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Barangay (Location) *</label>
+                            <input type="text" required id="propBarangay" placeholder="e.g. Poblacion Ilawod" class="w-full bg-white border border-slate-300 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-blue-800">
+                        </div>
+                    </div>
+
+                    <div class="border-b border-slate-200 pb-2 pt-2">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-user text-blue-800"></i> Requestor / Client Information</h2>
+                        <p class="text-xs text-slate-500">Provide contact information for evaluation and pickup authorization.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Requestor Full Name *</label>
+                            <input type="text" required id="reqName" placeholder="Juan dela Cruz" class="w-full bg-slate-50 border border-slate-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 focus:bg-white text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mobile Number *</label>
+                            <input type="tel" required id="reqMobile" placeholder="09123456789" class="w-full bg-slate-50 border border-slate-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 focus:bg-white text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address *</label>
+                            <input type="email" required id="reqEmail" placeholder="juan@domain.com" class="w-full bg-slate-50 border border-slate-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 focus:bg-white text-slate-800">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Postal Address *</label>
+                            <input type="text" required id="reqAddress" placeholder="Street, Barangay, City, Province" class="w-full bg-slate-50 border border-slate-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 focus:bg-white text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Relationship to Registered Owner *</label>
+                            <select id="reqRelation" required onchange="toggleRelationshipDetails(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-800 focus:bg-white text-slate-800">
+                                <option value="self">I am the Registered Owner</option>
+                                <option value="representative">Authorized Representative (with Special Power of Attorney)</option>
+                                <option value="child">Child / Direct Descendant</option>
+                                <option value="heir">Legal Heir / Successor</option>
+                                <option value="buyer">Prospective Buyer / Broker</option>
+                                <option value="other">Other relation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-4">
+                        <button type="button" onclick="goToStep(2)" class="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+                            Continue to Attachments <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 2: DOCUMENT UPLOADS -->
+                <div id="step-2" class="hidden space-y-6">
+                    <div class="border-b border-slate-200 pb-2">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-paperclip text-blue-800"></i> Client Support Attachments</h2>
+                        <p class="text-xs text-slate-500">Provide official documents to verify legitimacy and enable assessor approval.</p>
+                    </div>
+
+                    <!-- Checklist Note -->
+                    <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-2">
+                        <span class="font-bold text-slate-700"><i class="fa-solid fa-clipboard-list"></i> Required Checklist:</span>
+                        <ul id="checklistUl" class="list-disc list-inside text-slate-600 space-y-1">
+                            <li>At least 1 Government-Issued ID</li>
+                            <li>A formal request letter or statement of purpose</li>
+                        </ul>
+                    </div>
+
+                    <!-- Attachment Form Controls -->
+                    <div class="bg-[#f8fafc] border-2 border-dashed border-slate-300 rounded-xl p-6 text-center space-y-4">
+                        <div class="inline-flex items-center justify-center bg-slate-200 text-slate-600 w-12 h-12 rounded-full mb-1">
+                            <i class="fa-solid fa-cloud-upload-alt text-xl animate-bounce"></i>
+                        </div>
+                        <div class="max-w-md mx-auto">
+                            <p class="text-sm font-semibold text-slate-800">Add an official verification attachment</p>
+                            <p class="text-xs text-slate-500 mt-1">Accepted formats: <strong class="text-slate-700">PDF, JPEG, JPG, PNG</strong>. Max size: 10MB.</p>
+                        </div>
+
+                        <!-- Dropdown and upload container -->
+                        <div class="flex flex-col md:flex-row justify-center items-center gap-3 pt-2 max-w-lg mx-auto bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                            <div class="w-full text-left">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">What kind of document is this?</label>
+                                <select id="attachmentType" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-800">
+                                    <option value="Government-Issued ID">Government-Issued ID of Owner / Applicant</option>
+                                    <option value="Authorization / Special Power of Attorney (SPA)">Authorization Letter / Special Power of Attorney (SPA)</option>
+                                    <option value="Proof of Relation">Proof of Relation / Birth Certificate / Heirs Document</option>
+                                    <option value="Deed of Transfer / Deed of Absolute Sale">Deed of Absolute Sale / Deed of Transfer</option>
+                                    <option value="BIR Certificate Authorizing Registration (eCAR)">BIR Certificate Authorizing Registration (eCAR)</option>
+                                    <option value="Real Property Tax Clearance">Real Property Tax Clearance</option>
+                                    <option value="Proof of Payment">Latest Tax Receipt / Proof of Payment</option>
+                                    <option value="Other Attachment">Other Supporting Attachment (Specify)</option>
+                                </select>
+                            </div>
+                            <div class="w-full text-left" id="otherDocContainer" style="display: none;">
+                                <label class="block text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">Specify custom document type</label>
+                                <input type="text" id="otherDocName" placeholder="e.g. Affidavit of Consanguinity" class="w-full bg-slate-50 border border-amber-300 rounded px-2.5 py-1.5 text-xs text-slate-700">
+                            </div>
+                            <div class="w-full md:w-auto self-end mt-4 md:mt-0 flex flex-col items-center">
+                                <input type="file" id="fileUploadInput" accept=".pdf, .jpeg, .jpg, .png" class="hidden" onchange="processSelectedFile(this)">
+                                <button type="button" onclick="document.getElementById('fileUploadInput').click()" class="bg-slate-800 hover:bg-slate-700 text-white whitespace-nowrap text-xs font-bold py-2 px-4 rounded shadow-sm inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-file-circle-plus"></i> Select & Add File
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Files Preview Container -->
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Loaded Files (<span id="fileCount">0</span>)</h4>
+                        <div id="filePreviewContainer" class="space-y-2">
+                            <!-- No attachments state -->
+                            <div id="noFilesMsg" class="p-4 text-center border border-dashed border-slate-200 rounded-lg text-slate-400 text-xs italic">
+                                No files attached. You must attach relevant proof (such as Government ID or SPA) to proceed.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Footer -->
+                    <div class="flex justify-between pt-4 border-t border-slate-200">
+                        <button type="button" onclick="goToStep(1)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-left"></i> Back to Details
+                        </button>
+                        <button type="button" onclick="goToStep(3)" class="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+                            Proceed to Review <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: DELIVERY & PREVIEW -->
+                <div id="step-3" class="hidden space-y-6">
+                    <div class="border-b border-slate-200 pb-2">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-paper-plane text-blue-800"></i> Dispatch & Review Options</h2>
+                        <p class="text-xs text-slate-500">How would you prefer to claim your official document?</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Delivery Methods -->
+                        <div class="space-y-4">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">How to Claim Certification *</label>
+                            <div class="space-y-2">
+                                <label class="flex items-start gap-3 p-4 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 cursor-pointer">
+                                    <input type="radio" name="deliveryOpt" value="Pickup" checked class="mt-0.5" onchange="updateProcessingAlert('pickup')">
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">In-Person Pickup</p>
+                                        <p class="text-xs text-slate-500 mt-0.5">Collect directly at our municipal hall once notified via SMS or tracking link.</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-start gap-3 p-4 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 cursor-pointer">
+                                    <input type="radio" name="deliveryOpt" value="Courier" class="mt-0.5" onchange="updateProcessingAlert('delivery')">
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">Local Delivery Courier (Lalamove/Grab/J&T)</p>
+                                        <p class="text-xs text-slate-500 mt-0.5">We can secure an official delivery. Delivery / dispatch fee paid upon receipt (COD).</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Fees & Review Box -->
+                        <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Administrative Fees</h3>
+                                <p class="text-xl font-extrabold text-blue-900 flex items-baseline gap-1" id="feeStatus">
+                                    TBD <span class="text-xs text-slate-500 font-normal">(Subject to Evaluation)</span>
+                                </p>
+                                <p class="text-xs text-slate-600 mt-2">
+                                    Assessment starts immediately after verification. Our team will define standard fees and email/SMS invoice alerts with processing details. No advance fee payment required today.
+                                </p>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-slate-200">
+                                <span class="text-xs font-bold text-slate-700">Estimated Output Time:</span>
+                                <p class="text-xs text-amber-700 font-semibold" id="estTime">Within 2 to 3 Working Days (from complete documents check)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Client Attestation -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3 text-xs text-blue-900 leading-relaxed">
+                        <input type="checkbox" required id="attestationCheck" class="mt-0.5">
+                        <label for="attestationCheck" class="cursor-pointer select-none">
+                            I attest that all documents, proof, and relationship specifics provided in this application are authentic, updated, and legitimate. I understand any misrepresentation might result in a denial of service or administrative penalties under municipal statutes.
+                        </label>
+                    </div>
+
+                    <!-- Navigation Footer -->
+                    <div class="flex justify-between pt-4 border-t border-slate-200">
+                        <button type="button" onclick="goToStep(2)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-left"></i> Back to Attachments
+                        </button>
+                        <button type="submit" class="bg-blue-900 hover:bg-blue-800 text-white px-8 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-md">
+                            Submit Online Request <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- ================= TRACK STATUS VIEW ================= -->
+        <section id="view-track" class="hidden max-w-2xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 p-6 md:p-8">
+            <div class="text-center space-y-2 mb-8">
+                <div class="inline-flex items-center justify-center bg-blue-100 text-blue-800 w-12 h-12 rounded-full mb-1">
+                    <i class="fa-solid fa-magnifying-glass-location text-lg"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800">Track Request Processing</h2>
+                <p class="text-xs text-slate-500 max-w-sm mx-auto">Enter the receipt or transaction code generated when uploading your request to view visual real-time stage approval status.</p>
+            </div>
+
+            <!-- Input Box -->
+            <div class="flex gap-2 max-w-md mx-auto">
+                <input type="text" id="trackInput" placeholder="e.g. RP-8812-90A" class="bg-slate-50 border border-slate-300 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800 focus:bg-white flex-grow p-3 uppercase font-semibold text-center tracking-wider">
+                <button onclick="handleSearch()" class="bg-blue-900 hover:bg-blue-800 text-white font-semibold text-sm px-5 py-3 rounded-lg shadow-md flex items-center gap-1.5 transition-colors">
+                    Search <i class="fa-solid fa-search"></i>
+                </button>
+            </div>
+
+            <!-- Empty Search View -->
+            <div id="search-empty-state" class="mt-12 text-center text-slate-400 text-xs py-8 border border-dashed border-slate-200 rounded-lg">
+                <i class="fa-regular fa-clipboard text-3xl mb-2 text-slate-300 block"></i>
+                Please insert a valid tracking number to pull assessment records.
+            </div>
+
+            <!-- FOUND ASSESSMENT DATA VIEW -->
+            <div id="search-result-state" class="hidden mt-8 space-y-6">
+                <!-- Status Details Header -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Transaction Code</p>
+                        <h3 class="text-lg font-bold text-blue-900" id="resCode">--</h3>
+                    </div>
+                    <div class="text-right sm:text-right">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Current Status</p>
+                        <span id="resBadge" class="inline-block mt-0.5 px-3 py-1 text-xs font-bold rounded-full">--</span>
+                    </div>
+                </div>
+
+                <!-- Rejection Alert -->
+                <div id="resRejectedBox" class="hidden bg-red-50 border-l-4 border-red-600 rounded p-4">
+                    <div class="flex gap-2.5">
+                        <i class="fa-solid fa-circle-exclamation text-red-600 text-base mt-0.5"></i>
+                        <div>
+                            <p class="text-xs font-bold text-red-900">Assessor Issue Notification (Rejected)</p>
+                            <p class="text-xs text-red-800 mt-1" id="resRemarks">--</p>
+                            <p class="text-[10px] text-red-600 font-semibold mt-1">Please correct the highlighted issues and initiate a fresh filing or call (02) 8352-1920 for phone guidance.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pipeline Timeline -->
+                <div class="space-y-4 pt-4 border-t border-slate-200">
+                    <h4 class="text-xs font-bold text-slate-600 uppercase tracking-widest">Application Phase Timeline</h4>
+                    <div class="relative pl-6 space-y-6 border-l border-slate-200 ml-3">
+                        <!-- Stage 1 -->
+                        <div class="relative" id="line-stage1">
+                            <span id="dot-stage1" class="absolute -left-[30px] top-0 bg-slate-200 text-slate-600 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ring-4 ring-white"><i class="fa-solid fa-check"></i></span>
+                            <p class="text-xs font-bold text-slate-800">Submitted Online</p>
+                            <p class="text-[11px] text-slate-500" id="time-stage1">Date logged by applicant.</p>
+                        </div>
+                        <!-- Stage 2 -->
+                        <div class="relative" id="line-stage2">
+                            <span id="dot-stage2" class="absolute -left-[30px] top-0 bg-slate-200 text-slate-600 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ring-4 ring-white"><i class="fa-solid fa-circle"></i></span>
+                            <p class="text-xs font-bold text-slate-800">Document Verification & Assessment</p>
+                            <p class="text-[11px] text-slate-500" id="time-stage2">Assessors confirming requirements checklist and determining official fees.</p>
+                        </div>
+                        <!-- Stage 3 -->
+                        <div class="relative" id="line-stage3">
+                            <span id="dot-stage3" class="absolute -left-[30px] top-0 bg-slate-200 text-slate-600 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ring-4 ring-white"><i class="fa-solid fa-circle"></i></span>
+                            <p class="text-xs font-bold text-slate-800">Processing & Stamp Verification</p>
+                            <p class="text-[11px] text-slate-500" id="time-stage3">Printing of the certification and securing administrative stamp validation.</p>
+                        </div>
+                        <!-- Stage 4 -->
+                        <div class="relative" id="line-stage4">
+                            <span id="dot-stage4" class="absolute -left-[30px] top-0 bg-slate-200 text-slate-600 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ring-4 ring-white"><i class="fa-solid fa-circle"></i></span>
+                            <p class="text-xs font-bold text-slate-800">Ready for Release / Issued</p>
+                            <p class="text-[11px] text-slate-500" id="time-stage4">Physical copy can be obtained, or dispatched based on delivery instructions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Review Area -->
+                <div class="pt-4 border-t border-slate-200 text-xs space-y-2">
+                    <div class="flex justify-between"><span class="text-slate-500">Applicant:</span> <strong class="text-slate-800" id="resClient">--</strong></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Certificate:</span> <strong class="text-slate-800" id="resCert">--</strong></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Required Attachments:</span> <span id="resFiles" class="font-bold text-blue-900">-- Uploaded File/s</span></div>
+                    <div class="flex justify-between" id="resFeeRow"><span class="text-slate-500">Total Assessed Processing Fee:</span> <strong class="text-amber-700" id="resFee">TBD (Evaluating)</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= ADMIN STAFF VIEW ================= -->
+        <section id="view-admin" class="hidden space-y-6">
+            <!-- Header Panel -->
+            <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-user text-amber-600"></i> Administrative Review Desk
+                    </h2>
+                    <p class="text-xs text-slate-500">Real property application review, assessment fee processing, and official stamps verification.</p>
+                </div>
+                <!-- Controls and Statistics -->
+                <div class="flex gap-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded px-3 py-1.5 text-center">
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Pending Review</p>
+                        <p class="text-base font-extrabold text-blue-900" id="statPending">0</p>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded px-3 py-1.5 text-center">
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Processing</p>
+                        <p class="text-base font-extrabold text-amber-700" id="statProcessing">0</p>
+                    </div>
+                    <div class="bg-green-50 border border-green-200 rounded px-3 py-1.5 text-center">
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Issued</p>
+                        <p class="text-base font-extrabold text-green-900" id="statIssued">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter list & table card -->
+            <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h3 class="text-sm font-bold text-slate-700">Online Submission Log</h3>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <select id="filterStatus" onchange="loadAdminRecords()" class="bg-white border border-slate-300 rounded text-xs p-1.5 focus:outline-none focus:ring-1 focus:ring-amber-600">
+                            <option value="All">All Statuses</option>
+                            <option value="Submitted">Submitted (Pending)</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Issued">Issued</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                        <input type="text" id="searchAdmin" oninput="loadAdminRecords()" placeholder="Search Code or Name..." class="bg-white border border-slate-300 rounded text-xs p-1.5 focus:outline-none focus:ring-1 focus:ring-amber-600 max-w-xs">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-500 font-bold border-b border-slate-200">
+                                <th class="p-4">Track ID</th>
+                                <th class="p-4">Recipient</th>
+                                <th class="p-4">Certification</th>
+                                <th class="p-4">Owner / Property Info</th>
+                                <th class="p-4">Files</th>
+                                <th class="p-4">Assessed Fee</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4">Date</th>
+                                <th class="p-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody" class="divide-y divide-slate-100">
+                            <!-- Populated on JavaScript load -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto bg-[#0f172a] text-slate-400 py-6 border-t border-slate-800 text-center text-xs">
+        <p>&copy; 2026 Municipal Assessor's Office. Real Property online validation.</p>
+        <p class="mt-1 text-slate-600">Local Government Unit. Unauthorized portal login and data editing strictly logged and prosecuted.</p>
+        <p class="mt-1"><button onclick="promptStaffLogin()" id="footerStaffLink" class="hover:text-amber-400 transition-colors">Internal Staff Login</button></p>
+    </footer>
+
+    <!-- SUCCESS SUBMISSION MODAL -->
+    <div id="successModal" class="hidden fixed inset-0 bg-slate-900/80 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 text-center space-y-6">
+            <div class="inline-flex items-center justify-center bg-green-100 text-green-700 w-16 h-16 rounded-full">
+                <i class="fa-solid fa-circle-check text-4xl"></i>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-lg font-extrabold text-slate-800">Request Submitted Successfully</h3>
+                <p class="text-xs text-slate-500">Your documents are now queuing in the Municipal Assessor's inbox for review.</p>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-1">
+                <p class="text-[10px] text-amber-700 font-bold uppercase tracking-widest">Important: Reference / Track ID</p>
+                <p class="text-xl font-black text-amber-900 tracking-wider" id="newTransCode">--</p>
+                <p class="text-[10px] text-slate-500">Please note this down! Search this code on our tracker tab to trace status updates.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="copyToClipboardAndTrack()" class="flex-grow bg-blue-950 hover:bg-blue-900 text-white font-bold text-xs py-2.5 px-4 rounded transition-colors flex items-center justify-center gap-1.5 shadow">
+                    <i class="fa-solid fa-magnifying-glass"></i> Track Transaction
+                </button>
+                <button onclick="closeSuccessModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-2.5 px-4 rounded transition-colors">
+                    Filing Desk
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN EVALUATION MODAL -->
+    <div id="evaluationModal" class="hidden fixed inset-0 bg-slate-900/80 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <!-- Modal Header -->
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <h3 class="text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-stamp text-amber-500"></i> Evaluate Application Request</h3>
+                <button onclick="closeEvalModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-grow overflow-y-auto p-6 space-y-6">
+                <!-- Info Summary Strip -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 border border-slate-200 rounded-lg text-xs">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Track ID</p>
+                        <p class="text-sm font-bold text-blue-900" id="evalCode">--</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Registered Owner</p>
+                        <p class="text-sm font-bold text-slate-800" id="evalOwner">--</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Certificate Requested</p>
+                        <p class="text-sm font-bold text-amber-800 animate-pulse" id="evalCert">--</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase font-mono">Mobile / Contact</p>
+                        <p class="text-sm font-bold text-slate-800" id="evalContact">--</p>
+                    </div>
+                </div>
+
+                <!-- Split Columns for Data Evaluation and Document Verification -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left: Metadata Checklist Review -->
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-slate-800 border-b border-slate-100 pb-1.5 uppercase">Property & Client File Data</h4>
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 text-xs space-y-3">
+                            <div class="grid grid-cols-2 gap-x-2 gap-y-2.5">
+                                <div><span class="text-slate-400 font-medium">TDN:</span> <p id="evalTdn" class="font-bold text-slate-800">--</p></div>
+                                <div><span class="text-slate-400 font-medium">PIN:</span> <p id="evalPin" class="font-bold text-slate-800">--</p></div>
+                                <div><span class="text-slate-400 font-medium">OCT/TCT No:</span> <p id="evalTitle" class="font-bold text-slate-800">--</p></div>
+                                <div><span class="text-slate-400 font-medium">Lot No:</span> <p id="evalLot" class="font-bold text-slate-800">--</p></div>
+                                <div class="col-span-2"><span class="text-slate-400 font-medium">Location:</span> <p id="evalLocation" class="font-bold text-slate-800">--</p></div>
+                                <div class="col-span-2"><span class="text-slate-400 font-medium">Client / Relationship:</span> <p id="evalRelation" class="font-bold text-slate-800">--</p></div>
+                                <div class="col-span-2"><span class="text-slate-400 font-medium">Full Post Address:</span> <p id="evalAddress" class="font-bold text-slate-800">--</p></div>
+                            </div>
+                        </div>
+
+                        <!-- Processing Status Modification Controls -->
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 text-xs space-y-4">
+                            <h5 class="font-bold text-slate-800">Assessor Fee & Dispatch</h5>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] text-slate-500 font-bold uppercase mb-1">Fee Assessed (PHP) *</label>
+                                    <div class="relative">
+                                        <span class="absolute left-2.5 top-1.5 text-slate-500 font-semibold">₱</span>
+                                        <input type="number" id="evalFeeInput" step="0.01" class="w-full bg-white border border-slate-300 rounded py-1 px-3 pl-6 text-xs text-right font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-600" placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-500 font-bold uppercase mb-1">Claim Option Selected</label>
+                                    <input type="text" id="evalClaimOpt" readonly class="w-full bg-slate-200 border border-slate-300 rounded py-1.5 px-3 text-xs text-slate-600 font-semibold cursor-not-allowed">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Attachment Visual Verification & Rejection Control -->
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-slate-800 border-b border-slate-100 pb-1.5 uppercase">Document Proof (<span id="evalFileQty">0</span> attached)</h4>
+                        
+                        <!-- Client document download or view pipeline -->
+                        <div id="evalFileContainer" class="space-y-2">
+                            <!-- Populated with loop preview elements -->
+                        </div>
+
+                        <div class="bg-amber-50/50 rounded-lg p-4 border border-amber-200 text-xs space-y-3">
+                            <h5 class="font-bold text-amber-900 uppercase tracking-widest text-[10px] flex items-center gap-1.5"><i class="fa-solid fa-stamp"></i> Phase Decision Update</h5>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="setEvalDecision('Submitted')" id="btnDec-Submitted" class="py-1.5 rounded font-bold text-center border bg-white border-blue-200 text-blue-900 hover:bg-blue-50">Pending</button>
+                                <button onclick="setEvalDecision('Processing')" id="btnDec-Processing" class="py-1.5 rounded font-bold text-center border bg-white border-amber-200 text-amber-900 hover:bg-amber-50">Process</button>
+                                <button onclick="setEvalDecision('Issued')" id="btnDec-Issued" class="py-1.5 rounded font-bold text-center border bg-white border-green-200 text-green-900 hover:bg-green-50">Issue</button>
+                            </div>
+                            <button onclick="toggleRejectionBox(true)" class="w-full py-1.5 rounded font-bold text-center border border-red-200 bg-white text-red-700 hover:bg-red-50 flex justify-center items-center gap-1">
+                                <i class="fa-solid fa-circle-xmark"></i> Issue Rejection Remarks
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mandatory Rejection Logic Box -->
+                <div id="rejectionSection" class="hidden bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h5 class="text-xs font-extrabold text-red-900 uppercase">Reason for Rejection (Visible to Applicant)</h5>
+                        <button onclick="toggleRejectionBox(false)" class="text-red-600 text-xs hover:underline">Cancel</button>
+                    </div>
+                    <textarea id="rejectionRemarks" rows="3" placeholder="Identify issues clearly (e.g. 'Uploaded government ID is blurry and expired. Relationship as Representative is selected, but the upload lacks the necessary SPA from the title holder.')" class="w-full p-2.5 border border-red-300 rounded text-xs focus:ring-1 focus:ring-red-600 focus:outline-none bg-white text-slate-800"></textarea>
+                    <div class="flex justify-end">
+                        <button onclick="applyRejection()" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs py-1.5 px-4 rounded shadow-sm">
+                            Submit Official Rejection
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-slate-100 px-6 py-4 border-t border-slate-200 flex justify-between items-center">
+                <button onclick="closeEvalModal()" class="text-slate-500 hover:text-slate-800 text-xs font-semibold">Dismiss View</button>
+                <div class="flex gap-2">
+                    <button onclick="generateDocPreview()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-2 px-3 rounded flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-pdf"></i> Draft Certificate Print Preview
+                    </button>
+                    <button onclick="saveApplicationEvaluation()" class="bg-amber-600 hover:bg-amber-700 text-slate-900 font-extrabold text-xs py-2 px-5 rounded shadow">
+                        Save Assessment Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOCUMENT PREVIEW MODAL -->
+    <div id="previewPrintModal" class="hidden fixed inset-0 bg-slate-900/90 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-8 font-serif relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closePreviewPrint()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 font-sans"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="text-center space-y-1 pb-4 border-b-2 border-slate-800 text-xs text-slate-700">
+                <p class="font-semibold uppercase tracking-wide">Republic of the Philippines</p>
+                <p>PROVINCE OF CAPIZ</p>
+                <p class="font-bold text-slate-900">MUNICIPALITY OF DUMALAG</p>
+                <p class="font-bold text-slate-900">OFFICE OF THE MUNICIPAL ASSESSOR</p>
+            </div>
+            <div class="my-8 text-center">
+                <h2 class="text-xl font-extrabold tracking-widest text-slate-800 font-serif" id="printCertTitle">CERTIFICATE OF NO IMPROVEMENT</h2>
+                <p class="text-[10px] italic text-slate-500">(PREVIEW - FOR OFFICIAL RELEASE)</p>
+            </div>
+            <div class="space-y-6 text-sm text-justify leading-relaxed text-slate-800">
+                <p class="uppercase font-bold">TO WHOM IT MAY CONCERN:</p>
+                <p>
+                    This is to certify that according to the existing assessment and tax mapping records of this municipality, the real property declared in the name of 
+                    <strong class="underline" id="printOwnerName">--</strong> under Tax Declaration Number 
+                    <strong class="underline" id="printTdn">--</strong> with PIN <strong class="underline" id="printPin">--</strong>, 
+                    located in Barangay <strong class="underline" id="printBarangay">--</strong>, Dumalag, Capiz, described as 
+                    <strong id="printDetails">--</strong> is verified as follows:
+                </p>
+                <div id="printCertSpecifics" class="p-4 bg-slate-50 border border-slate-200 rounded font-sans text-xs space-y-1.5">
+                    <!-- Loaded tailored script outputs -->
+                </div>
+                <p>
+                    This certification is being issued upon the request of <strong class="underline" id="printRequestor">--</strong>, 
+                    having verified their identity and legitimate relationship to the registered owner, specifically to serve BIR eCAR, property transfer, and other legal processes.
+                </p>
+                <p>
+                    Given this <span class="underline" id="printDate">--</span> at the Office of the Municipal Assessor, Dumalag, Capiz, Philippines.
+                </p>
+            </div>
+            <div class="mt-12 flex justify-between items-end">
+                <div class="text-xs text-slate-500 font-sans">
+                    <p>Assessed Fee: ₱<span id="printAssessedFee">0.00</span></p>
+                    <p>O.R. Number: Pending Payment</p>
+                    <p class="font-mono text-[9px] mt-1 text-slate-400">Auth Token ID: <span id="printTrackId">--</span></p>
+                </div>
+                <div class="text-center font-sans space-y-1">
+                    <div class="border-b border-slate-400 w-48 mx-auto mt-6"></div>
+                    <p class="text-xs font-bold uppercase text-slate-850">MUNICIPAL ASSESSOR</p>
+                    <p class="text-[10px] text-slate-500 font-medium">Head of Assessment LGU</p>
+                </div>
+            </div>
+            <div class="mt-8 border-t border-slate-100 pt-4 flex justify-end gap-2 font-sans">
+                <button onclick="window.print()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs py-2 px-4 rounded shadow-md flex items-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> Print Document
+                </button>
+                <button onclick="closePreviewPrint()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-2 px-4 rounded">
+                    Close Preview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        // Memory-based Mock Records Initialized
+        let requests = JSON.parse(localStorage.getItem('propertyRequests')) || [
+            {
+                id: "RP-8812-90A",
+                certType: "Certificate of No Improvement",
+                otherCertText: "",
+                propTdn: "F-002-14022",
+                propPin: "024-12-004-05-012",
+                propLot: "Lot 104-A, Cad 45",
+                propTitle: "T-123456",
+                propOwner: "Maria Corazon Santos",
+                propBarangay: "Poblacion Ilawod",
+                reqName: "Arturo Santos",
+                reqMobile: "09171234567",
+                reqEmail: "arturo.s@mail.com",
+                reqAddress: "Subdivision St., Dumalag, Capiz",
+                reqRelation: "child",
+                deliveryOpt: "Pickup",
+                status: "Submitted",
+                fee: null,
+                remarks: "",
+                dateCreated: "2026-11-04T08:30:00Z",
+                attachments: [
+                    { name: "Government_ID_Santos.pdf", type: "Government-Issued ID" },
+                    { name: "Birth_Certificate.jpeg", type: "Proof of Relation" }
+                ]
+            },
+            {
+                id: "RP-4592-31B",
+                certType: "Tax Declaration",
+                otherCertText: "",
+                propTdn: "E-101-55091",
+                propPin: "024-12-004-02-109",
+                propLot: "Lot 503, Cad 45",
+                propTitle: "OCT-9081",
+                propOwner: "Jose Delos Reyes",
+                propBarangay: "Santa Rita",
+                reqName: "Juanita Delos Reyes",
+                reqMobile: "09985551234",
+                reqEmail: "juanita.reyes@email.com",
+                reqAddress: "Purok 3, Santa Rita, Dumalag, Capiz",
+                reqRelation: "self",
+                deliveryOpt: "Courier",
+                status: "Processing",
+                fee: 150.00,
+                remarks: "",
+                dateCreated: "2026-11-03T10:15:00Z",
+                attachments: [
+                    { name: "Unified_ID_Jose_reyes.jpg", type: "Government-Issued ID" }
+                ]
+            }
+        ];
+
+        let currentActiveStep = 1;
+        let selectedAttachments = [];
+        let isStaffAuthorized = false;
+        let selectedRecordForEvaluation = null;
+        let trackingSearchData = null;
+
+        // On document ready
+        window.onload = function() {
+            saveToStorage();
+            updateStats();
+        };
+
+        function saveToStorage() {
+            localStorage.setItem('propertyRequests', JSON.stringify(requests));
+        }
+
+        // VIEW & NAVIGATION ROUTER
+        function switchView(view) {
+            document.getElementById('view-submit').classList.add('hidden');
+            document.getElementById('view-track').classList.add('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+            
+            document.getElementById('nav-submit').className = "tab-btn px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold flex items-center gap-2";
+            document.getElementById('nav-track').className = "tab-btn px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold flex items-center gap-2";
+
+            if(view === 'submit') {
+                document.getElementById('view-submit').classList.remove('hidden');
+                document.getElementById('nav-submit').className = "tab-btn px-4 py-2 rounded-md bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold flex items-center gap-2 shadow-md";
+            } else if(view === 'track') {
+                document.getElementById('view-track').classList.remove('hidden');
+                document.getElementById('nav-track').className = "tab-btn px-4 py-2 rounded-md bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold flex items-center gap-2 shadow-md";
+            } else if(view === 'admin') {
+                if(!isStaffAuthorized) {
+                    promptStaffLogin();
+                    return;
+                }
+                document.getElementById('view-admin').classList.remove('hidden');
+                loadAdminRecords();
+            }
+        }
+
+        // STEPPER CONTROL (1 to 3)
+        function goToStep(step) {
+            // Validation
+            if(step > currentActiveStep) {
+                if(currentActiveStep === 1) {
+                    let form = document.getElementById('requestForm');
+                    // Check step 1 validation
+                    if (!form.checkValidity()) {
+                        form.reportValidity();
+                        return;
+                    }
+                }
+                if(currentActiveStep === 2 && selectedAttachments.length === 0) {
+                    alert("Please upload and add at least one (1) required attachment (such as government-issued ID) to verify processing credentials.");
+                    return;
+                }
+            }
+
+            // Move state
+            document.getElementById(`step-${currentActiveStep}`).classList.add('hidden');
+            document.getElementById(`step-${step}`).classList.remove('hidden');
+
+            // Header state
+            document.getElementById(`step${currentActiveStep}-lbl`).classList.remove('step-active');
+            document.getElementById(`step${step}-lbl`).classList.add('step-active');
+
+            currentActiveStep = step;
+        }
+
+        function toggleOtherCert(val) {
+            const container = document.getElementById('otherCertContainer');
+            const field = document.getElementById('otherCertText');
+            if(val === 'Other') {
+                container.classList.remove('hidden');
+                field.setAttribute('required', 'true');
+            } else {
+                container.classList.add('hidden');
+                field.removeAttribute('required');
+            }
+        }
+
+        function toggleRelationshipDetails(val) {
+            const checklist = document.getElementById('checklistUl');
+            updateChecklists(document.getElementById('certType').value);
+        }
+
+        function updateChecklists(cert) {
+            const checklist = document.getElementById('checklistUl');
+            let requirements = ["• Minimum of one (1) Government-issued Photo ID.", "• Latest official tax declaration, deed, or tax receipt."];
+            
+            if(cert === "Certificate of No Improvement") {
+                requirements.push("• Current year's Tax Receipt proving up-to-date real property tax.");
+            } else if(cert === "Transfer Request") {
+                requirements.push("• BIR Certificate Authorizing Registration (eCAR) or notarized Deed of Absolute Sale.");
+            }
+
+            const relation = document.getElementById('reqRelation').value;
+            if(relation === "representative") {
+                requirements.push("• Authorized Representative authorization letter or notarized Special Power of Attorney (SPA).");
+            } else if(relation === "child" || relation === "heir") {
+                requirements.push("• Proof of Relationship (Birth Certificate, Marriage Contract, or Estate distribution order).");
+            }
+
+            checklist.innerHTML = requirements.map(r => `<li>${r}</li>`).join('');
+        }
+
+        function toggleOtherDocType(val) {
+            const otherCont = document.getElementById('otherDocContainer');
+            if(val === 'Other Attachment') {
+                otherCont.style.display = 'block';
+            } else {
+                otherCont.style.display = 'none';
+            }
+        }
+
+        // Setup Event Listener on loading
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('attachmentType').addEventListener('change', function() {
+                toggleOtherDocType(this.value);
+            });
+        });
+
+        // CLIENT FILE SELECTION HANDLER
+        function processSelectedFile(input) {
+            if(!input.files || input.files.length === 0) return;
+            const file = input.files[0];
+            const sizeLimit = 10 * 1024 * 1024; // 10MB
+            
+            if(file.size > sizeLimit) {
+                alert("The selected file exceeds 10MB limit. Please upload optimized versions.");
+                return;
+            }
+
+            let category = document.getElementById('attachmentType').value;
+            if(category === "Other Attachment") {
+                const specify = document.getElementById('otherDocName').value.trim();
+                category = specify ? `Other: ${specify}` : "Other File";
+            }
+
+            // Append item
+            selectedAttachments.push({
+                name: file.name,
+                type: category,
+                size: (file.size / 1024 / 1024).toFixed(2) + " MB"
+            });
+
+            // Refresh DOM previews
+            renderAttachments();
+            
+            // Clean interface
+            input.value = "";
+            document.getElementById('otherDocName').value = "";
+            document.getElementById('attachmentType').value = "Government-Issued ID";
+            document.getElementById('otherDocContainer').style.display = "none";
+        }
+
+        function renderAttachments() {
+            const box = document.getElementById('filePreviewContainer');
+            const countLbl = document.getElementById('fileCount');
+            const msg = document.getElementById('noFilesMsg');
+
+            box.innerHTML = "";
+            countLbl.innerText = selectedAttachments.length;
+
+            if(selectedAttachments.length === 0) {
+                box.appendChild(msg);
+                return;
+            }
+
+            selectedAttachments.forEach((f, idx) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs hover:border-blue-300";
+                div.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-file-circle-check text-blue-900 text-lg"></i>
+                        <div>
+                            <p class="font-bold text-slate-800 break-all">${f.name}</p>
+                            <span class="inline-block mt-0.5 bg-blue-100 text-blue-800 text-[9px] px-2 py-0.5 rounded font-semibold uppercase tracking-wider">${f.type}</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeAttachment(${idx})" class="text-red-500 hover:text-red-700 px-2 py-1 transition-colors">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
+                `;
+                box.appendChild(div);
+            });
+        }
+
+        function removeAttachment(idx) {
+            selectedAttachments.splice(idx, 1);
+            renderAttachments();
+        }
+
+        function updateProcessingAlert(opt) {
+            const timeLbl = document.getElementById('estTime');
+            if(opt === 'delivery') {
+                timeLbl.innerText = "Within 3 to 4 Working Days (via Courier Dispatch, Standard Delivery Charge COD)";
+            } else {
+                timeLbl.innerText = "Within 2 to 3 Working Days (Standard In-Person Retrieval)";
+            }
+        }
+
+        // SUBMISSION GENERATION LOGIC
+        function handleFormSubmission(event) {
+            event.preventDefault();
+
+            if(!document.getElementById('attestationCheck').checked) {
+                alert("Please declare true details verification using the attestation checkbox.");
+                return;
+            }
+
+            if(selectedAttachments.length === 0) {
+                alert("You must include at least one supporting requirement!");
+                goToStep(2);
+                return;
+            }
+
+            // Build unique Philippine Municipal Tracking Reference Code
+            const genId = "RP-" + Math.floor(1000 + Math.random() * 9000) + "-" + Math.random().toString(36).substring(2, 5).toUpperCase();
+
+            const payload = {
+                id: genId,
+                certType: document.getElementById('certType').value,
+                otherCertText: document.getElementById('otherCertText').value,
+                propTdn: document.getElementById('propTdn').value || "None Registered",
+                propPin: document.getElementById('propPin').value || "None Registered",
+                propLot: document.getElementById('propLot').value || "N/A",
+                propTitle: document.getElementById('propTitle').value || "OCT/TCT not declared",
+                propOwner: document.getElementById('propOwner').value,
+                propBarangay: document.getElementById('propBarangay').value,
+                reqName: document.getElementById('reqName').value,
+                reqMobile: document.getElementById('reqMobile').value,
+                reqEmail: document.getElementById('reqEmail').value,
+                reqAddress: document.getElementById('reqAddress').value,
+                reqRelation: document.getElementById('reqRelation').value,
+                deliveryOpt: document.querySelector('input[name="deliveryOpt"]:checked').value,
+                status: "Submitted",
+                fee: null,
+                remarks: "",
+                dateCreated: new Date().toISOString(),
+                attachments: [...selectedAttachments]
+            };
+
+            requests.unshift(payload);
+            saveToStorage();
+            updateStats();
+
+            // Set receipt
+            document.getElementById('newTransCode').innerText = genId;
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+            // Complete overhaul reset back to index
+            document.getElementById('requestForm').reset();
+            selectedAttachments = [];
+            currentActiveStep = 1;
+            renderAttachments();
+            goToStep(1);
+            switchView('submit');
+        }
+
+        function copyToClipboardAndTrack() {
+            const trackId = document.getElementById('newTransCode').innerText;
+            navigator.clipboard.writeText(trackId).then(() => {
+                alert("Transaction ID copied to clipboard!");
+                closeSuccessModal();
+                document.getElementById('trackInput').value = trackId;
+                handleSearch();
+                switchView('track');
+            }).catch(err => {
+                closeSuccessModal();
+                document.getElementById('trackInput').value = trackId;
+                handleSearch();
+                switchView('track');
+            });
+        }
+
+        // REAL-TIME SEARCH STATUS LOGIC (Client View)
+        function handleSearch() {
+            const input = document.getElementById('trackInput').value.trim().toUpperCase();
+            const emptyState = document.getElementById('search-empty-state');
+            const resultState = document.getElementById('search-result-state');
+
+            if(!input) {
+                alert("Please specify an assessment code!");
+                return;
+            }
+
+            const hit = requests.find(r => r.id === input);
+
+            if(!hit) {
+                alert("No active Philippine Assessor submission record matched that code. Inspect tracking digits.");
+                emptyState.classList.remove('hidden');
+                resultState.classList.add('hidden');
+                return;
+            }
+
+            // Expose results view
+            emptyState.classList.add('hidden');
+            resultState.classList.remove('hidden');
+
+            // Feed card metadata
+            document.getElementById('resCode').innerText = hit.id;
+            document.getElementById('resClient').innerText = hit.reqName;
+            document.getElementById('resCert').innerText = hit.certType === 'Other' ? hit.otherCertText : hit.certType;
+            document.getElementById('resFiles').innerText = hit.attachments.length;
+            document.getElementById('resFee').innerText = hit.fee ? `₱${Number(hit.fee).toFixed(2)}` : "Evaluating - Pending Assessors Fee";
+
+            // Status badges coloring
+            const badge = document.getElementById('resBadge');
+            badge.className = "inline-block mt-0.5 px-3 py-1 text-xs font-bold rounded-full";
+            
+            if(hit.status === 'Submitted') {
+                badge.innerText = "Pending Verification";
+                badge.classList.add('bg-blue-100', 'text-blue-800');
+            } else if(hit.status === 'Processing') {
+                badge.innerText = "Assessed & Processing";
+                badge.classList.add('bg-amber-100', 'text-amber-800');
+            } else if(hit.status === 'Issued') {
+                badge.innerText = "Issued / Ready for Claim";
+                badge.classList.add('bg-green-100', 'text-green-800');
+            } else if(hit.status === 'Rejected') {
+                badge.innerText = "Assessors Objection";
+                badge.classList.add('bg-red-100', 'text-red-800');
+            }
+
+            // Determine if Rejected Reason display box is shown
+            const rejectionAlertBox = document.getElementById('resRejectedBox');
+            if(hit.status === 'Rejected') {
+                rejectionAlertBox.classList.remove('hidden');
+                document.getElementById('resRemarks').innerText = hit.remarks || "Assessor requested correction. Ensure authentic attachment upload matches exact names.";
+            } else {
+                rejectionAlertBox.classList.add('hidden');
+            }
+
+            // Timeline adjustments
+            configureTimelineStep(1, true, `Created at ${new Date(hit.dateCreated).toLocaleDateString()}`);
+            
+            if(hit.status === 'Processing') {
+                configureTimelineStep(2, true, 'Assessment finalized. Verified credentials check complete.');
+                configureTimelineStep(3, false, 'Internal staff stamp printing initiated.');
+                configureTimelineStep(4, false, 'Awaiting validation stamp.');
+            } else if(hit.status === 'Issued') {
+                configureTimelineStep(2, true, 'Fully validated.');
+                configureTimelineStep(3, true, 'Form processing & assessor endorsement recorded.');
+                configureTimelineStep(4, true, `Ready to acquire. Form claim: [${hit.deliveryOpt}]`);
+            } else if(hit.status === 'Rejected') {
+                configureTimelineStep(2, false, 'Objection identified.');
+                configureTimelineStep(3, false, 'Awaiting necessary submission revision.');
+                configureTimelineStep(4, false, 'Application rejected.');
+            } else { // Submitted State default timeline loop
+                configureTimelineStep(2, false, 'Pending verification check.');
+                configureTimelineStep(3, false, 'Awaiting validation.');
+                configureTimelineStep(4, false, 'Processing needed.');
+            }
+        }
+
+        function configureTimelineStep(idx, passed, statusTxt) {
+            const dot = document.getElementById(`dot-stage${idx}`);
+            const text = document.getElementById(`time-stage${idx}`);
+
+            if(passed) {
+                dot.className = "absolute -left-[30px] top-0 bg-blue-900 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ring-4 ring-white";
+                text.innerText = statusTxt;
+                text.className = "text-[11px] text-blue-900 font-semibold";
+            } else {
+                dot.className = "absolute -left-[30px] top-0 bg-slate-200 text-slate-600 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ring-4 ring-white";
+                text.innerText = statusTxt;
+                text.className = "text-[11px] text-slate-400";
+            }
+        }
+
+        // PRIVATE BACK OFFICE ADMIN LOGIC
+        function promptStaffLogin() {
+            if(isStaffAuthorized) {
+                switchView('admin');
+                return;
+            }
+
+            const pw = prompt("Access Restricted: Unauthorized intrusion or manipulation of local government applications is illegal.\n\nEnter Back Office Admin Passphrase:");
+            if(pw === "admin123") {
+                isStaffAuthorized = true;
+                alert("System validation accepted. Directing to administrative workbench dashboard.");
+                document.getElementById('nav-staff').classList.add('hidden');
+                document.getElementById('footerStaffLink').classList.add('hidden');
+                document.getElementById('nav-logout').classList.remove('hidden');
+                
+                // Route directly
+                switchView('admin');
+            } else if (pw !== null) {
+                alert("Incorrect passcode entered. Your connection attempt was logged.");
+            }
+        }
+
+        function logoutStaff() {
+            isStaffAuthorized = false;
+            document.getElementById('nav-staff').classList.remove('hidden');
+            document.getElementById('footerStaffLink').classList.remove('hidden');
+            document.getElementById('nav-logout').classList.add('hidden');
+            alert("Administrative console session closed.");
+            switchView('submit');
+        }
+
+        function updateStats() {
+            const pendingQty = requests.filter(r => r.status === 'Submitted').length;
+            const processingQty = requests.filter(r => r.status === 'Processing').length;
+            const issuedQty = requests.filter(r => r.status === 'Issued').length;
+
+            document.getElementById('statPending').innerText = pendingQty;
+            document.getElementById('statProcessing').innerText = processingQty;
+            document.getElementById('statIssued').innerText = issuedQty;
+        }
+
+        function loadAdminRecords() {
+            const table = document.getElementById('adminTableBody');
+            const term = document.getElementById('searchAdmin').value.toLowerCase();
+            const typeFilter = document.getElementById('filterStatus').value;
+
+            table.innerHTML = "";
+
+            const hits = requests.filter(r => {
+                const isSearchMatch = r.id.toLowerCase().includes(term) || r.reqName.toLowerCase().includes(term);
+                const isTypeMatch = typeFilter === 'All' || r.status === typeFilter;
+                return isSearchMatch && isTypeMatch;
+            });
+
+            if(hits.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="p-8 text-center text-slate-400 italic">No submissions or records matched the current selection.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            hits.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50";
+
+                let statusColor = "bg-blue-100 text-blue-800";
+                if (r.status === "Processing") statusColor = "bg-amber-100 text-amber-800";
+                if (r.status === "Issued") statusColor = "bg-green-100 text-green-800";
+                if (r.status === "Rejected") statusColor = "bg-red-100 text-red-800";
+
+                const dateDisplay = new Date(r.dateCreated).toLocaleDateString('en-PH', {month: 'short', day: 'numeric', year: 'numeric'});
+
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-slate-800">${r.id}</td>
+                    <td class="p-4">
+                        <div class="font-bold">${r.reqName}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">${r.reqMobile}</div>
+                    </td>
+                    <td class="p-4">
+                        <p class="font-bold text-blue-900">${r.certType === 'Other' ? r.otherCertText : r.certType}</p>
+                    </td>
+                    <td class="p-4">
+                        <div><span class="text-slate-400">Owner:</span> <strong>${r.propOwner}</strong></div>
+                        <div class="text-[10px] text-slate-500">TDN: ${r.propTdn} | Brgy: ${r.propBarangay}</div>
+                    </td>
+                    <td class="p-4">
+                        <button onclick="previewSpecificAdminFiles(${JSON.stringify(r.attachments).replace(/"/g, '&quot;')})" class="bg-slate-100 border border-slate-300 rounded-full px-2 py-0.5 text-[10px] text-slate-600 hover:bg-slate-200 inline-flex items-center gap-1.5 font-semibold">
+                            <i class="fa-solid fa-paperclip"></i> View Files (${r.attachments.length})
+                        </button>
+                    </td>
+                    <td class="p-4 font-bold text-slate-700">${r.fee ? '₱' + Number(r.fee).toFixed(2) : 'TBD'}</td>
+                    <td class="p-4"><span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${statusColor}">${r.status}</span></td>
+                    <td class="p-4 font-mono text-slate-500">${dateDisplay}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="evaluateRequest('${r.id}')" class="bg-amber-600 hover:bg-amber-700 text-slate-900 font-bold px-3 py-1.5 rounded flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-stamp"></i> Manage Action
+                        </button>
+                    </td>
+                `;
+                table.appendChild(tr);
+            });
+        }
+
+        // PREVIEW SUPPORT FILE POPUP
+        function previewSpecificAdminFiles(attList) {
+            let filesStr = attList.map(f => `📁 ${f.name} (type: ${f.type})`).join("\n");
+            alert(`--- Verification Documents submitted via upload: ---\n\n${filesStr}\n\n[Administrative Office Action]: The original files can be visual inspected/saved in your file browser folders.`);
+        }
+
+        // EVALUATION ACTION DESK & SAVE PIPELINE
+        function evaluateRequest(id) {
+            selectedRecordForEvaluation = requests.find(r => r.id === id);
+            if(!selectedRecordForEvaluation) return;
+
+            // Display values
+            document.getElementById('evalCode').innerText = selectedRecordForEvaluation.id;
+            document.getElementById('evalOwner').innerText = selectedRecordForEvaluation.propOwner;
+            document.getElementById('evalCert').innerText = selectedRecordForEvaluation.certType === 'Other' ? selectedRecordForEvaluation.otherCertText : selectedRecordForEvaluation.certType;
+            document.getElementById('evalContact').innerText = selectedRecordForEvaluation.reqMobile;
+
+            document.getElementById('evalTdn').innerText = selectedRecordForEvaluation.propTdn;
+            document.getElementById('evalPin').innerText = selectedRecordForEvaluation.propPin;
+            document.getElementById('evalTitle').innerText = selectedRecordForEvaluation.propTitle;
+            document.getElementById('evalLot').innerText = selectedRecordForEvaluation.propLot;
+            document.getElementById('evalLocation').innerText = selectedRecordForEvaluation.propBarangay;
+            document.getElementById('evalRelation').innerText = `${selectedRecordForEvaluation.reqName} (${selectedRecordForEvaluation.reqRelation})`;
+            document.getElementById('evalAddress').innerText = selectedRecordForEvaluation.reqAddress;
+
+            document.getElementById('evalClaimOpt').value = selectedRecordForEvaluation.deliveryOpt;
+            document.getElementById('evalFeeInput').value = selectedRecordForEvaluation.fee || "";
+
+            // Adjust attachment loop files inside Modal View
+            const fileBox = document.getElementById('evalFileContainer');
+            document.getElementById('evalFileQty').innerText = selectedRecordForEvaluation.attachments.length;
+            fileBox.innerHTML = "";
+            selectedRecordForEvaluation.attachments.forEach(f => {
+                const d = document.createElement('div');
+                d.className = "flex items-center justify-between p-2 bg-white border border-slate-200 rounded text-xs hover:border-amber-300";
+                d.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-file-pdf text-red-500 text-sm"></i>
+                        <div>
+                            <p class="font-bold text-slate-800 select-all">${f.name}</p>
+                            <span class="text-[9px] px-1 bg-slate-100 border rounded font-semibold text-slate-500 uppercase">${f.type}</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5 items-center">
+                        <label class="flex items-center gap-1 font-bold text-[10px] text-green-700 cursor-pointer">
+                            <input type="checkbox" checked class="rounded cursor-pointer"> Verify
+                        </label>
+                    </div>
+                `;
+                fileBox.appendChild(d);
+            });
+
+            // Status decisions active UI class toggle
+            setDecisionUIBtnActive(selectedRecordForEvaluation.status);
+
+            // Rejection display settings reset
+            toggleRejectionBox(selectedRecordForEvaluation.status === "Rejected");
+            document.getElementById('rejectionRemarks').value = selectedRecordForEvaluation.remarks || "";
+
+            // Fire modal visual trigger
+            document.getElementById('evaluationModal').classList.remove('hidden');
+        }
+
+        function setDecisionUIBtnActive(st) {
+            ['Submitted', 'Processing', 'Issued'].forEach(s => {
+                const btn = document.getElementById(`btnDec-${s}`);
+                if(s === st) {
+                    btn.className = "py-1.5 rounded font-extrabold text-center border-2 bg-blue-900 border-blue-900 text-white shadow-sm scale-105";
+                } else {
+                    btn.className = "py-1.5 rounded font-bold text-center border bg-white border-slate-200 text-slate-700 hover:bg-slate-50";
+                }
+            });
+        }
+
+        function setEvalDecision(st) {
+            if(!selectedRecordForEvaluation) return;
+            selectedRecordForEvaluation.status = st;
+            setDecisionUIBtnActive(st);
+            if(st !== 'Rejected') {
+                toggleRejectionBox(false);
+            }
+        }
+
+        function toggleRejectionBox(show) {
+            const box = document.getElementById('rejectionSection');
+            if(show) {
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        function applyRejection() {
+            const rem = document.getElementById('rejectionRemarks').value.trim();
+            if(!rem) {
+                alert("Before confirming, enter actionable reasons (e.g., 'Requires authorized Special Power of Attorney').");
+                return;
+            }
+
+            selectedRecordForEvaluation.status = "Rejected";
+            selectedRecordForEvaluation.remarks = rem;
+            alert("Objection remarks recorded. This submission will reflect as rejected until revised by the applicant.");
+            setDecisionUIBtnActive('Rejected');
+        }
+
+        function saveApplicationEvaluation() {
+            if(!selectedRecordForEvaluation) return;
+
+            const fee = document.getElementById('evalFeeInput').value;
+            selectedRecordForEvaluation.fee = fee ? parseFloat(fee) : null;
+
+            // Safe sync to global requests collection
+            const idx = requests.findIndex(r => r.id === selectedRecordForEvaluation.id);
+            if(idx !== -1) {
+                requests[idx] = selectedRecordForEvaluation;
+            }
+
+            saveToStorage();
+            updateStats();
+            closeEvalModal();
+            loadAdminRecords();
+            alert("LGU processing record has been successfully verified & updated.");
+        }
+
+        function closeEvalModal() {
+            document.getElementById('evaluationModal').classList.add('hidden');
+            selectedRecordForEvaluation = null;
+        }
+
+        // GENERATE PRINT DRAFT VISUAL (PREVIEW IN MODAL)
+        function generateDocPreview() {
+            if(!selectedRecordForEvaluation) return;
+
+            // Adjust Title
+            const certTitle = selectedRecordForEvaluation.certType === 'Other' ? selectedRecordForEvaluation.otherCertText : selectedRecordForEvaluation.certType;
+            document.getElementById('printCertTitle').innerText = certTitle.toUpperCase();
+
+            // Setup placeholders
+            document.getElementById('printOwnerName').innerText = selectedRecordForEvaluation.propOwner;
+            document.getElementById('printTdn').innerText = selectedRecordForEvaluation.propTdn;
+            document.getElementById('printPin').innerText = selectedRecordForEvaluation.propPin;
+            document.getElementById('printBarangay').innerText = selectedRecordForEvaluation.propBarangay;
+            document.getElementById('printRequestor').innerText = selectedRecordForEvaluation.reqName;
+            document.getElementById('printTrackId').innerText = selectedRecordForEvaluation.id;
+            
+            // Format current date with philippine standards
+            const displayDate = new Date().toLocaleDateString('en-PH', {day: 'numeric', month: 'long', year: 'numeric'});
+            document.getElementById('printDate').innerText = displayDate;
+
+            // Show fee or pending
+            const printFee = selectedRecordForEvaluation.fee ? Number(selectedRecordForEvaluation.fee).toFixed(2) : "0.00";
+            document.getElementById('printAssessedFee').innerText = printFee;
+
+            // Details and description mapping
+            const detailDesc = document.getElementById('printDetails');
+            const particulars = document.getElementById('printCertSpecifics');
+
+            let lotDetails = `a parcel of land under Cadastral / Lot No. "${selectedRecordForEvaluation.propLot}"`;
+            if (selectedRecordForEvaluation.propTitle && selectedRecordForEvaluation.propTitle !== "None") {
+                lotDetails += ` and registered under Original/Transfer Certificate of Title No. "${selectedRecordForEvaluation.propTitle}"`;
+            }
+            detailDesc.innerText = lotDetails;
+
+            // Particular specifics based on kind
+            if(selectedRecordForEvaluation.certType === "Certificate of No Improvement") {
+                particulars.innerHTML = `
+                    <p>⚡ <strong>Assessment Note:</strong> Ground verification confirms that the specified real property is a vacant lot with no existing building/structure/machinery declared for assessment.</p>
+                    <p>🎯 <strong>Intended Use:</strong> Processing BIR Capital Gains Tax & eCAR requirements.</p>
+                `;
+            } else if(selectedRecordForEvaluation.certType === "Transfer Request") {
+                particulars.innerHTML = `
+                    <p>⚡ <strong>Processing Notice:</strong> Transfer of tax declaration of real property has been requested with supporting Deed of Conveyance and BIR clearances.</p>
+                    <p>👉 <strong>Applicant Status:</strong> Requested as ${selectedRecordForEvaluation.reqRelation.toUpperCase()}.</p>
+                `;
+            } else {
+                particulars.innerHTML = `
+                    <p>⚡ <strong>Assessment Note:</strong> Official certified documents confirming information mapped under registry references on active files.</p>
+                    <p>👉 Registered Owner listed on Tax mapping index files matching name exactly: ${selectedRecordForEvaluation.propOwner}.</p>
+                `;
+            }
+
+            // Bring UI up
+            document.getElementById('previewPrintModal').classList.remove('hidden');
+        }
+
+        function closePreviewPrint() {
+            document.getElementById('previewPrintModal').classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>
+```
+
+### How to test and deploy on your computer:
+1. Open your browser or the **Preview** tab in the top menu to run it directly.
+2. To save for offline or server use: save the file as `index.html`. Double-clicking `index.html` on any PC will launch the full portal in Google Chrome, Microsoft Edge, or Firefox.
