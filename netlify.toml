@@ -1,0 +1,19 @@
+[build]
+  publish = "."
+
+# Keep the old file URL working.
+[[redirects]]
+  from = "/online_certification_request_portal.html"
+  to = "/"
+  status = 301
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"

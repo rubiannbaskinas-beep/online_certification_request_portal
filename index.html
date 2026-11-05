@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Online Real Property & Tax Certification Portal</title>
+    <meta name="description" content="Request and track real property and tax certifications from the Municipal Assessor's Office.">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Assessor Portal">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -39,7 +48,10 @@
                     <p class="text-xs text-amber-500 font-medium tracking-widest uppercase">Real Property Online Certification Portal</p>
                 </div>
             </div>
-            <nav class="flex items-center gap-2">
+            <nav class="flex flex-wrap items-center justify-center gap-2">
+                <button onclick="installApp()" id="nav-install" class="hidden tab-btn px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
+                    <i class="fa-solid fa-download"></i> Install App
+                </button>
                 <button onclick="switchView('submit')" id="nav-submit" class="tab-btn px-4 py-2 rounded-md bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold flex items-center gap-2 shadow-md">
                     <i class="fa-solid fa-file-signature"></i> Request Certification
                 </button>
@@ -1415,10 +1427,64 @@
         }
 
     </script>
+    <!-- INSTALLABLE APP (PWA) -->
+    <div id="ios-install-hint" class="hidden fixed bottom-4 inset-x-4 sm:left-auto sm:right-4 sm:w-96 z-50 bg-[#0f172a] text-white rounded-xl shadow-2xl p-4 text-sm flex gap-3 items-start">
+        <i class="fa-solid fa-mobile-screen-button text-amber-500 text-xl mt-0.5"></i>
+        <div class="flex-1">
+            <p class="font-bold">Install this portal as an app</p>
+            <p class="text-slate-300 text-xs mt-1">Tap the <i class="fa-solid fa-arrow-up-from-bracket"></i> Share button, then choose <strong>Add to Home Screen</strong>.</p>
+        </div>
+        <button onclick="dismissIosHint()" class="text-slate-400 hover:text-white" aria-label="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <script>
+        let deferredInstallPrompt = null;
+        const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch((err) => console.warn('Service worker registration failed:', err));
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            document.getElementById('nav-install').classList.remove('hidden');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            document.getElementById('nav-install').classList.add('hidden');
+        });
+
+        async function installApp() {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                await deferredInstallPrompt.userChoice;
+                deferredInstallPrompt = null;
+                document.getElementById('nav-install').classList.add('hidden');
+            } else {
+                document.getElementById('ios-install-hint').classList.remove('hidden');
+            }
+        }
+
+        function dismissIosHint() {
+            document.getElementById('ios-install-hint').classList.add('hidden');
+            localStorage.setItem('iosInstallHintDismissed', '1');
+        }
+
+        // iOS Safari has no install prompt: show the Install button with manual instructions.
+        const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIos && !isStandalone()) {
+            document.getElementById('nav-install').classList.remove('hidden');
+            if (!localStorage.getItem('iosInstallHintDismissed')) {
+                setTimeout(() => document.getElementById('ios-install-hint').classList.remove('hidden'), 2500);
+            }
+        }
+
+        // App shortcuts (?view=submit / ?view=track)
+        const startView = new URLSearchParams(location.search).get('view');
+        if (startView === 'submit' || startView === 'track') switchView(startView);
+    </script>
 </body>
 </html>
-```
-
-### How to test and deploy on your computer:
-1. Open your browser or the **Preview** tab in the top menu to run it directly.
-2. To save for offline or server use: save the file as `index.html`. Double-clicking `index.html` on any PC will launch the full portal in Google Chrome, Microsoft Edge, or Firefox.
